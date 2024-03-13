@@ -1,5 +1,6 @@
 package com.example.spotifywrapped20;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,14 +10,18 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class TopTracksAdapter extends RecyclerView.Adapter<TopTracksAdapter.TopTracksViewHolder> {
 
-    private List<String> mTracks; // Assuming we're just dealing with track names for simplicity
+    private List<SpotifyItem> mTracks;
+    private Context context;
 
-    public TopTracksAdapter(List<String> tracks) {
-        mTracks = tracks;
+    public TopTracksAdapter(Context context, List<SpotifyItem> tracks) {
+        this.context = context;
+        this.mTracks = tracks;
     }
 
     @NonNull
@@ -28,9 +33,11 @@ public class TopTracksAdapter extends RecyclerView.Adapter<TopTracksAdapter.TopT
 
     @Override
     public void onBindViewHolder(@NonNull TopTracksViewHolder holder, int position) {
-        String trackName = mTracks.get(position);
-        holder.tvTrackName.setText(trackName);
-        // Here you'd also load the track image into ivTrackImage
+        SpotifyItem artist = mTracks.get(position);
+        holder.tvTrackName.setText(artist.getName());
+        Glide.with(context)
+                .load(artist.getUrl())
+                .into(holder.ivTrackImage);
     }
 
     @Override

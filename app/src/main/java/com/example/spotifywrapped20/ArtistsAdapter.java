@@ -1,5 +1,6 @@
 package com.example.spotifywrapped20;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,14 +10,18 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class ArtistsAdapter extends RecyclerView.Adapter<ArtistsAdapter.ArtistsViewHolder> {
 
-    private final List<String> mArtists;
+    private final List<SpotifyItem> mArtists;
+    private Context context;
 
-    public ArtistsAdapter(List<String> artists) {
-        mArtists = artists;
+    public ArtistsAdapter(Context context, List<SpotifyItem> artists) {
+        this.context = context;
+        this.mArtists = artists;
     }
 
     @NonNull
@@ -28,9 +33,11 @@ public class ArtistsAdapter extends RecyclerView.Adapter<ArtistsAdapter.ArtistsV
 
     @Override
     public void onBindViewHolder(@NonNull ArtistsViewHolder holder, int position) {
-        String artistName = mArtists.get(position);
-        holder.tvArtistName.setText(artistName);
-        // Optional: Load artist image if your item layout includes an ImageView
+        SpotifyItem artist = mArtists.get(position);
+        holder.tvArtistName.setText(artist.getName());
+        Glide.with(context)
+                .load(artist.getUrl())
+                .into(holder.ivArtistImage);
     }
 
     @Override

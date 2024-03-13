@@ -118,14 +118,23 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         JSONObject jsonObject = new JSONObject(responseData);
                         JSONArray items = jsonObject.getJSONArray("items");
-                        final List<String> trackNames = new ArrayList<>();
-                        for (int i = 0; i < 5; i++) {
+                        final List<SpotifyItem> trackItems = new ArrayList<>();
+                        for (int i = 0; i < items.length(); i++) {
                             JSONObject track = items.getJSONObject(i);
                             String name = track.getString("name");
-                            trackNames.add(name);
+
+                            // Extracting the album image URL
+                            JSONObject album = track.getJSONObject("album");
+                            JSONArray images = album.getJSONArray("images");
+                            String imageUrl = "";
+                            if (images.length() > 0) {
+                                imageUrl = images.getJSONObject(0).getString("url"); // Taking the first image as an example
+                            }
+
+                            trackItems.add(new SpotifyItem(name, imageUrl));
                         }
-                        runOnUiThread(() -> updateUI(trackNames));
-                    } catch (Exception e) {
+                        runOnUiThread(() -> updateUI(trackItems));
+                    } catch (JSONException e) {
                         Log.e("MainActivity", "Failed to parse data: ", e);
                     }
                 }
@@ -133,8 +142,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void updateUI(List<String> trackNames) {
-        TopTracksAdapter adapter = new TopTracksAdapter(trackNames);
+    private void updateUI(List<SpotifyItem> trackNames) {
+        TopTracksAdapter adapter = new TopTracksAdapter(this, trackNames);
         rvTopTracks.setAdapter(adapter);
     }
 
@@ -158,29 +167,28 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-            if (!response.isSuccessful()) {
-                throw new IOException("Unexpected code " + response);
-            } else {
-                final String responseData = response.body().string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    JSONArray items = jsonObject.getJSONArray("items");
-                    final List<String> artistNames = new ArrayList<>();
-                    for (int i = 0; i < items.length(); i++) {
-                        JSONObject artist = items.getJSONObject(i);
-                        String name = artist.getString("name");
-                        artistNames.add(name);
-                    }
-                    runOnUiThread(() -> updateUIWithArtists(artistNames));
-                } catch (Exception e) {
-                    Log.e("MainActivity", "Failed to parse data: ", e);
+            // Handling response
+            final String responseData = response.body().string();
+            try {
+                JSONObject jsonObject = new JSONObject(responseData);
+                JSONArray items = jsonObject.getJSONArray("items");
+                final List<SpotifyItem> artistItems = new ArrayList<>();
+                for (int i = 0; i < items.length(); i++) {
+                    JSONObject artist = items.getJSONObject(i);
+                    String name = artist.getString("name");
+                    JSONArray images = artist.getJSONArray("images");
+                    String imageUrl = images.getJSONObject(0).getString("url");
+                    artistItems.add(new SpotifyItem(name, imageUrl));
                 }
+                runOnUiThread(() -> updateUIWithArtists(artistItems));
+            } catch (Exception e) {
+                Log.e("MainActivity", "Failed to parse data: ", e);
             }
         }
     });
 }
-    private void updateUIWithArtists(List<String> artistNames) {
-        ArtistsAdapter adapter = new ArtistsAdapter(artistNames);
+    private void updateUIWithArtists(List<SpotifyItem> artistNames) {
+        ArtistsAdapter adapter = new ArtistsAdapter(this, artistNames);
         rvTopArtists.setAdapter(adapter);
     }
 
