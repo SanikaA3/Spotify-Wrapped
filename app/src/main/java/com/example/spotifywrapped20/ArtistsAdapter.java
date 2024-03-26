@@ -47,12 +47,12 @@ public class ArtistsAdapter extends RecyclerView.Adapter<ArtistsAdapter.ArtistsV
 
     static class ArtistsViewHolder extends RecyclerView.ViewHolder {
         TextView tvArtistName;
-        ImageView ivArtistImage; // Optional
+        ImageView ivArtistImage;
 
         ArtistsViewHolder(View itemView) {
             super(itemView);
             tvArtistName = itemView.findViewById(R.id.tvArtistName);
-            ivArtistImage = itemView.findViewById(R.id.ivArtistImage); // Optional
+            ivArtistImage = itemView.findViewById(R.id.ivArtistImage);
         }
     }
 }

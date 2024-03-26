@@ -32,6 +32,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import android.media.MediaPlayer;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView profileTextView;
     private RecyclerView rvTopTracks;
     private RecyclerView rvTopArtists;
+    private int currentTrackIndex = 0;
+    private MediaPlayer mediaPlayer = new MediaPlayer();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,18 +125,21 @@ public class MainActivity extends AppCompatActivity {
                         for (int i = 0; i < items.length(); i++) {
                             JSONObject track = items.getJSONObject(i);
                             String name = track.getString("name");
+                            String previewUrl = track.optString("preview_url", ""); // Extract preview URL
 
-                            // Extracting the album image URL
                             JSONObject album = track.getJSONObject("album");
                             JSONArray images = album.getJSONArray("images");
                             String imageUrl = "";
                             if (images.length() > 0) {
-                                imageUrl = images.getJSONObject(0).getString("url"); // Taking the first image as an example
+                                imageUrl = images.getJSONObject(0).getString("url");
                             }
 
-                            trackItems.add(new SpotifyItem(name, imageUrl));
+                            trackItems.add(new SpotifyItem(name, imageUrl, previewUrl)); // Include previewUrl
                         }
-                        runOnUiThread(() -> updateUI(trackItems));
+                        runOnUiThread(() -> {
+                            updateUI(trackItems);
+                            autoPlayTrackPreviews(trackItems); // Call method to auto-play the first track's preview
+                        });
                     } catch (JSONException e) {
                         Log.e("MainActivity", "Failed to parse data: ", e);
                     }
@@ -142,10 +148,47 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
     private void updateUI(List<SpotifyItem> trackNames) {
         TopTracksAdapter adapter = new TopTracksAdapter(this, trackNames);
         rvTopTracks.setAdapter(adapter);
     }
+
+
+
+    private void playTrackPreview(List<SpotifyItem> trackItems, int trackIndex) {
+        if (trackIndex >= trackItems.size()) {
+            Log.i("MainActivity", "End of track list reached.");
+            return; // Stop playback if we've reached the end of the track list
+        }
+
+        SpotifyItem track = trackItems.get(trackIndex);
+        if (track.getPreviewUrl() != null && !track.getPreviewUrl().isEmpty()) {
+            try {
+                mediaPlayer.reset(); // Reset the MediaPlayer to its uninitialized state
+                mediaPlayer.setDataSource(track.getPreviewUrl());
+                mediaPlayer.prepareAsync();
+                mediaPlayer.setOnPreparedListener(mp -> mediaPlayer.start());
+                mediaPlayer.setOnCompletionListener(mp -> {
+                    currentTrackIndex++; // Move to the next track
+                    playTrackPreview(trackItems, currentTrackIndex); // Recursively play the next track
+                });
+            } catch (IOException e) {
+                Log.e("MainActivity", "Could not play track preview", e);
+            }
+        } else {
+            currentTrackIndex++; // Skip to the next track if preview URL is missing
+            playTrackPreview(trackItems, currentTrackIndex);
+        }
+    }
+
+    private void autoPlayTrackPreviews(List<SpotifyItem> trackItems) {
+        currentTrackIndex = 0; // Start from the first track
+        playTrackPreview(trackItems, currentTrackIndex);
+    }
+
+
+
 
     private void fetchUserTopArtists() {
     if (mAccessToken == null) {
@@ -167,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-            // Handling response
             final String responseData = response.body().string();
             try {
                 JSONObject jsonObject = new JSONObject(responseData);
@@ -178,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
                     String name = artist.getString("name");
                     JSONArray images = artist.getJSONArray("images");
                     String imageUrl = images.getJSONObject(0).getString("url");
-                    artistItems.add(new SpotifyItem(name, imageUrl));
+                    artistItems.add(new SpotifyItem(name, imageUrl, ""));
                 }
                 runOnUiThread(() -> updateUIWithArtists(artistItems));
             } catch (Exception e) {
@@ -204,7 +246,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         cancelCall();
         super.onDestroy();
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
     }
+
 
     private void cancelCall() {
         if (mCall != null) {
