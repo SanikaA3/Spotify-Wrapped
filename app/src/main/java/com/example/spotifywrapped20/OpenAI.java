@@ -3,7 +3,7 @@ import okhttp3.*;
 
 public class OpenAI {
 
-    public static final String API_KEY = "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";
+    public static final String ID = "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";
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     OkHttpClient client = new OkHttpClient();
@@ -16,7 +16,7 @@ public class OpenAI {
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
-                .addHeader("Authorization", "Bearer " + API_KEY)
+                .addHeader("Authorization", "Bearer " + ID)
                 .build();
 
         client.newCall(request).enqueue(callback);
