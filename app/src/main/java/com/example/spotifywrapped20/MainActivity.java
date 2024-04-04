@@ -65,7 +65,46 @@ public class MainActivity extends AppCompatActivity {
         profileTextView = findViewById(R.id.response_text_view);
 
         Button loginButton = findViewById(R.id.login_button);
+        Button aiButton = findViewById(R.id.aiButton);
 
+        aiButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                aiButton.setText("Please wait...");
+                OpenAI openAI = new OpenAI();
+                openAI.generateText("Once upon a time", new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (!response.isSuccessful()) {
+                            throw new IOException("Unexpected code " + response);
+                        }
+
+                        try {
+                            JSONObject jsonResponse = new JSONObject(response.body().string());
+                            JSONArray choicesArray = jsonResponse.getJSONArray("choices");
+                            JSONObject firstChoice = choicesArray.getJSONObject(0);
+                            final String responseBody = firstChoice.getString("text");
+                            Log.d("OpenAI Response", responseBody);
+
+                            // Update the UI on the main thread
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    aiButton.setText(responseBody);
+                                }
+                            });
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            }
+        });
 
         loginButton.setOnClickListener(v -> {
             getToken();
