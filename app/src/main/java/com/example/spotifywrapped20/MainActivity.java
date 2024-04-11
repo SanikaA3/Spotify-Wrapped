@@ -235,28 +235,37 @@ public class MainActivity extends AppCompatActivity {
     private void playTrackPreview(List<SpotifyItem> trackItems, int trackIndex) {
         if (trackIndex >= trackItems.size()) {
             Log.i("MainActivity", "End of track list reached.");
-            return;
+            return; // Stop playback if we've reached the end of the track list
         }
 
         SpotifyItem track = trackItems.get(trackIndex);
-        if (track.getPreviewUrl() != null && !track.getPreviewUrl().isEmpty()) {
+        String previewUrl = track.getPreviewUrl();
+
+        if (previewUrl != null && !previewUrl.isEmpty()) {
             try {
-                mediaPlayer.reset();
-                mediaPlayer.setDataSource(track.getPreviewUrl());
-                mediaPlayer.prepareAsync();
-                mediaPlayer.setOnPreparedListener(mp -> mediaPlayer.start());
+                mediaPlayer.reset(); // Reset the MediaPlayer to its uninitialized state
+                mediaPlayer.setDataSource(previewUrl); // Set the data source to the URL of the track preview
+                mediaPlayer.prepareAsync(); // Prepare the player to play asynchronously
+                mediaPlayer.setOnPreparedListener(mp -> mediaPlayer.start()); // Start playback once preparation is complete
                 mediaPlayer.setOnCompletionListener(mp -> {
-                    currentTrackIndex++;
-                    playTrackPreview(trackItems, currentTrackIndex);
+                    currentTrackIndex++; // Move to the next track
+                    playTrackPreview(trackItems, currentTrackIndex); // Recursively play the next track
                 });
             } catch (IOException e) {
-                Log.e("MainActivity", "Could not play track preview", e);
+                Log.e("MainActivity", "Could not play track preview: " + previewUrl, e);
+                // Attempt to play the next track if the current one fails
+                currentTrackIndex++;
+                playTrackPreview(trackItems, currentTrackIndex);
             }
         } else {
+            Log.e("MainActivity", "Preview URL is null or empty for track index: " + trackIndex);
+            // Skip to the next track if preview URL is missing
             currentTrackIndex++;
             playTrackPreview(trackItems, currentTrackIndex);
         }
     }
+
+
 
     private void autoPlayTrackPreviews(List<SpotifyItem> trackItems) {
         currentTrackIndex = 0;
