@@ -18,7 +18,6 @@ public class TopTracksAdapter extends RecyclerView.Adapter<TopTracksAdapter.TopT
 
     private List<SpotifyItem> mTracks;
     private Context context;
-
     public TopTracksAdapter(Context context, List<SpotifyItem> tracks) {
         this.context = context;
         this.mTracks = tracks;
